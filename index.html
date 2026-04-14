@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainingsschema — 4-daags Upper/Lower</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12; --surface: #15181e; --card: #1c2028; --border: #272c36;
+    --accent: #e8ff47; --accent2: #ff6b35; --text: #e8eaf0; --muted: #7a8094;
+    --upper: #ff6b35; --lower: #a855f7; --walk: #22d3a5; --rest: #7a8094;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 40px 20px 80px; line-height: 1.5; }
+  .noise { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); opacity: 0.4; }
+  .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  header { margin-bottom: 48px; border-left: 4px solid var(--accent); padding-left: 20px; }
+  header .tag { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(44px, 8vw, 80px); line-height: 0.95; }
+  header p { margin-top: 14px; color: var(--muted); font-size: 15px; max-width: 520px; font-weight: 300; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 48px; }
+  .meta-pill { background: var(--card); border: 1px solid var(--border); border-radius: 100px; padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .meta-pill span { color: var(--accent); font-weight: 700; }
+  .principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 48px; }
+  .principle { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .principle .num { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--accent); line-height: 1; margin-bottom: 6px; }
+  .principle h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .principle p { font-size: 12px; color: var(--muted); font-weight: 300; }
+  .sets-counter { background: var(--card); border: 1px solid var(--accent); border-radius: 14px; padding: 20px 24px; margin-bottom: 28px; }
+  .sets-counter-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .sets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .sets-row { color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(39,44,54,0.6); }
+  .sets-row:last-child { border-bottom: none; }
+  .sets-row span { color: var(--accent); font-weight: 700; }
+  .week-label { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--muted); margin-bottom: 20px; margin-top: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 28px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .day-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 20px; overflow: hidden; transition: border-color 0.2s; }
+  .day-card:hover { border-color: var(--accent); }
+  .day-header { display: flex; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  .day-header.no-toggle { cursor: default; border-bottom: none; }
+  .day-badge { font-family: 'Bebas Neue', sans-serif; font-size: 22px; min-width: 44px; text-align: center; padding: 6px 10px; border-radius: 8px; line-height: 1; }
+  .badge-upper { background: rgba(255,107,53,0.15); color: var(--upper); }
+  .badge-lower { background: rgba(168,85,247,0.15); color: var(--lower); }
+  .badge-walk  { background: rgba(34,211,165,0.15); color: var(--walk); }
+  .badge-rest  { background: rgba(122,128,148,0.15); color: var(--rest); }
+  .day-info { flex: 1; }
+  .day-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; line-height: 1; }
+  .day-subtitle { font-size: 12px; color: var(--muted); font-weight: 300; margin-top: 2px; }
+  .day-type-tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; white-space: nowrap; }
+  .tag-upper { background: rgba(255,107,53,0.15); color: var(--upper); }
+  .tag-lower { background: rgba(168,85,247,0.15); color: var(--lower); }
+  .tag-walk  { background: rgba(34,211,165,0.15); color: var(--walk); }
+  .chevron { color: var(--muted); font-size: 18px; transition: transform 0.3s; }
+  .day-body { padding: 0 24px 24px; display: none; }
+  .day-body.open { display: block; }
+  .time-pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 16px; }
+  .time-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .pairing-intro { background: rgba(232,255,71,0.06); border: 1px solid rgba(232,255,71,0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: var(--muted); }
+  .pairing-intro strong { color: var(--accent); }
+  .pair-block { margin-bottom: 20px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .pair-header { padding: 10px 14px; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+  .pair-number { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; color: var(--accent); min-width: 28px; }
+  .pair-label { flex: 1; }
+  .pair-rest { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: rgba(232,255,71,0.1); color: var(--accent); }
+  .exercise-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .exercise-table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); background: var(--surface); }
+  .exercise-table td { padding: 11px 14px; border-bottom: 1px solid rgba(39,44,54,0.5); vertical-align: top; }
+  .exercise-table tr:last-child td { border-bottom: none; }
+  .ex-name { font-weight: 600; color: var(--text); }
+  .ex-note { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 300; }
+  .ex-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 5px; letter-spacing: 0.5px; }
+  .ex-push { background: rgba(255,107,53,0.15); color: var(--upper); }
+  .ex-pull { background: rgba(77,184,255,0.15); color: #4db8ff; }
+  .ex-legs { background: rgba(168,85,247,0.15); color: var(--lower); }
+  .sb { display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .rb { display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 13px; color: var(--text); white-space: nowrap; }
+  .rs { font-size: 12px; color: var(--muted); }
+  .tip-box { margin-top: 16px; padding: 12px 16px; border-radius: 10px; border-left: 3px solid var(--accent); background: rgba(232,255,71,0.04); font-size: 13px; color: var(--muted); }
+  .tip-box strong { color: var(--accent); }
+  .walk-body { padding: 20px 24px; }
+  .walk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+  .walk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .walk-card h4 { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--walk); margin-bottom: 6px; }
+  .walk-card p { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .science-section { margin-top: 48px; margin-bottom: 48px; }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; margin-bottom: 20px; }
+  .science-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .science-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .science-card h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; color: var(--accent2); }
+  .science-card p { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.6; }
+  footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <div class="tag">4-daags schema · Upper/Lower ×2 · Antagonist pairing · 15 sets/spiergroep · max 60 min</div>
+    <h1>UPPER /<br>LOWER</h1>
+    <p>4 trainingsdagen · 2 zone 2 wandeldagen · 1 rustdag · Antagonist pairing voor maximale efficiëntie · Alles binnen 60 minuten.</p>
+  </header>
+
+  <div class="meta-row">
+    <div class="meta-pill">Methode <span>Upper / Lower ×2</span></div>
+    <div class="meta-pill">Volgorde <span>Antagonist pairing</span></div>
+    <div class="meta-pill">Sets/spiergroep <span>15 / week</span></div>
+    <div class="meta-pill">Max sessieduur <span>60 min</span></div>
+    <div class="meta-pill">Wandeldagen <span>2 × zone 2</span></div>
+    <div class="meta-pill">Rustdag <span>Zondag</span></div>
+  </div>
+
+  <div class="principles">
+    <div class="principle">
+      <div class="num">15</div>
+      <h4>Sets/spiergroep/week</h4>
+      <p>Sweet spot hypertrofie — Krieger meta-analyse (2010)</p>
+    </div>
+    <div class="principle">
+      <div class="num">↕</div>
+      <h4>Antagonist pairing</h4>
+      <p>Push + pull afwisselen — kortere rusttijd, zelfde prestatie</p>
+    </div>
+    <div class="principle">
+      <div class="num">60</div>
+      <h4>Minuten max</h4>
+      <p>Incl. 8 min lopen + rekken & strekken</p>
+    </div>
+    <div class="principle">
+      <div class="num">RIR 2</div>
+      <h4>Per set</h4>
+      <p>2 herhalingen in reserve — veilig en effectief op 48+</p>
+    </div>
+  </div>
+
+  <div class="sets-counter">
+    <div class="sets-counter-label">SETS PER SPIERGROEP PER WEEK — ALLE 15 ✓</div>
+    <div class="sets-grid">
+      <div class="sets-row">Borst <span>8 (ma) + 7 (do) = 15</span></div>
+      <div class="sets-row">Rug breed <span>8 (ma) + 7 (do) = 15</span></div>
+      <div class="sets-row">Schouders <span>7 (ma) + 8 (do) = 15</span></div>
+      <div class="sets-row">Rug dik <span>7 (ma) + 8 (do) = 15</span></div>
+      <div class="sets-row">Triceps <span>7 (ma) + 8 (do) = 15</span></div>
+      <div class="sets-row">Biceps <span>7 (ma) + 8 (do) = 15</span></div>
+      <div class="sets-row">Quadriceps <span>8 (di) + 7 (vr) = 15</span></div>
+      <div class="sets-row">Hamstrings <span>7 (di) + 8 (vr) = 15</span></div>
+    </div>
+  </div>
+
+  <div class="week-label">DE WEEK</div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--upper)"></div>Push-oefening</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4db8ff"></div>Pull-oefening</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--lower)"></div>Legs</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--walk)"></div>Zone 2 wandelen</div>
+  </div>
+
+  <!-- MAANDAG UPPER A -->
+  <div class="day-card">
+    <div class="day-header" onclick="toggle(this)">
+      <div class="day-badge badge-upper">MA</div>
+      <div class="day-info">
+        <div class="day-name">MAANDAG — UPPER A</div>
+        <div class="day-subtitle">Kracht-focus · Antagonist pairing · Push ↕ Pull afwisselend</div>
+      </div>
+      <span class="day-type-tag tag-upper">Upper · ~55 min</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="day-body open">
+      <div class="time-pills">
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">8 min lopen</span>
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">~42 min kracht</span>
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">5 min rekken</span>
+      </div>
+      <div class="pairing-intro">
+        <strong>Antagonist pairing:</strong> Doe oefening A, rust 90 sec, doe oefening B van hetzelfde paar, rust 90 sec — dan terug naar A. Terwijl borst werkt herstelt rug, en andersom. Bespaart 10+ minuten per sessie.
+      </div>
+
+      <!-- PAAR 1 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">1</div>
+          <div class="pair-label" style="color:var(--muted)">ZWAAR COMPOUND PAAR — 4 rondes · uitgerust beginnen</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Incline Barbell Bench Press</div><div class="ex-note">Borst · Kracht · RIR 2 — eerste set altijd uitgerust</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">6–8</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Weighted Pull-Up / Lat Pulldown</div><div class="ex-note">Rug breed · Kracht · RIR 2</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">6–8</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 2 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">2</div>
+          <div class="pair-label" style="color:var(--muted)">COMPOUND PAAR — 4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Dumbbell Shoulder Press</div><div class="ex-note">Schouders · Zittend of staand</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">8–10</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Seated Cable Row</div><div class="ex-note">Rug dik · Schouderbladen volledig samentrekken</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">8–10</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 3 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">3</div>
+          <div class="pair-label" style="color:var(--muted)">ISOLATIE PAAR — 3–4 rondes</div>
+          <span class="pair-rest">60 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Cable Lateral Raise</div><div class="ex-note">Schouders · Eenzijdig, langzaam neer</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Straight Arm Pulldown</div><div class="ex-note">Rug breed · Lat-isolatie, rechte armen</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 4 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">4</div>
+          <div class="pair-label" style="color:var(--muted)">ARMEN PAAR — 3 rondes</div>
+          <span class="pair-rest">60 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Tricep Pushdown (V-bar)</div><div class="ex-note">Triceps · Ellebogen strak op de romp</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Barbell Curl</div><div class="ex-note">Biceps · Geen momentum, volle ROM</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">8–10</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="tip-box"><strong>Volgorde in de praktijk:</strong> Bench → 90 sec → Pull-up → 90 sec → Bench → 90 sec → Pull-up… enzovoort voor 4 rondes. Dan door naar paar 2. Je bent in totaal ~42 min bezig met kracht.</div>
+    </div>
+  </div>
+
+  <!-- DINSDAG LOWER A -->
+  <div class="day-card">
+    <div class="day-header" onclick="toggle(this)">
+      <div class="day-badge badge-lower">DI</div>
+      <div class="day-info">
+        <div class="day-name">DINSDAG — LOWER A</div>
+        <div class="day-subtitle">Kracht-focus · Quad ↕ Hamstring/bil afwisselend · Geen lumbale belasting</div>
+      </div>
+      <span class="day-type-tag tag-lower">Lower · ~52 min</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="day-body">
+      <div class="time-pills">
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">8 min lopen</span>
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">~39 min kracht</span>
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">5 min rekken</span>
+      </div>
+      <div class="pairing-intro">
+        <strong>Antagonist pairing benen:</strong> Quad-oefeningen en hamstring/bil-oefeningen wisselen elkaar af. Terwijl quads werken herstellen hamstrings en andersom — zelfde tijdwinst als bij upper.
+      </div>
+
+      <!-- PAAR 1 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">1</div>
+          <div class="pair-label" style="color:var(--muted)">ZWAAR COMPOUND PAAR — 4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">QUAD</span><div class="ex-name">Hack Squat machine</div><div class="ex-note">Rug gesteund, geen lumbale belasting · RIR 2</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">6–8</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag" style="background:rgba(34,211,165,0.15);color:var(--walk)">HAM</span><div class="ex-name">Cable Pull-Through</div><div class="ex-note">Hamstrings + billen · Kabel vanuit de grond, rug volledig neutraal</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 2 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">2</div>
+          <div class="pair-label" style="color:var(--muted)">COMPOUND PAAR — 3–4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">QUAD</span><div class="ex-name">Leg Press</div><div class="ex-note">Brede voetplaatsing = meer billen erbij</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag" style="background:rgba(34,211,165,0.15);color:var(--walk)">HAM</span><div class="ex-name">Lying Leg Curl</div><div class="ex-note">Hamstrings · Volle ROM, langzaam neer</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- ENKELVOUDIG -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">3</div>
+          <div class="pair-label" style="color:var(--muted)">KUIT — ENKELVOUDIG · 3 sets</div>
+          <span class="pair-rest">60 sec rust</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">KUIT</span><div class="ex-name">Standing Calf Raise</div><div class="ex-note">3 sec excentrisch neer — geen antagonist mogelijk</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="tip-box"><strong>Tip:</strong> Hack squat en leg press zijn bewuste keuzes — beide geven quads maximale belasting zonder lumbale druk. Cable pull-through is de veiligste heupschanier-oefening die bestaat.</div>
+    </div>
+  </div>
+
+  <!-- WOENSDAG WANDELEN -->
+  <div class="day-card">
+    <div class="day-header no-toggle">
+      <div class="day-badge badge-walk">WO</div>
+      <div class="day-info">
+        <div class="day-name">WOENSDAG — ZONE 2 WANDELEN</div>
+        <div class="day-subtitle">45–60 min · 110–130 bpm · Actief herstel + HRV-verbetering</div>
+      </div>
+      <span class="day-type-tag tag-walk">Zone 2</span>
+    </div>
+    <div class="walk-body">
+      <div class="walk-grid">
+        <div class="walk-card"><h4>Duur</h4><p>45–60 minuten. Meer is beter, maar 45 min is voldoende voor het HRV-effect.</p></div>
+        <div class="walk-card"><h4>Hartslag</h4><p>110–130 bpm. Gesprek is mogelijk maar niet helemaal comfortabel. Niet harder.</p></div>
+        <div class="walk-card"><h4>Buiten</h4><p>Daglicht in de ochtend versterkt je circadiaans ritme, verlaagt cortisol en verbetert slaapkwaliteit.</p></div>
+        <div class="walk-card"><h4>Waarom</h4><p>Verbrandt vet als brandstof, versterkt mitochondriën, activeert parasympathisch zenuwstelsel — verhoogt HRV direct.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONDERDAG UPPER B -->
+  <div class="day-card">
+    <div class="day-header" onclick="toggle(this)">
+      <div class="day-badge badge-upper">DO</div>
+      <div class="day-info">
+        <div class="day-name">DONDERDAG — UPPER B</div>
+        <div class="day-subtitle">Volume-focus · Antagonist pairing · Push ↕ Pull afwisselend</div>
+      </div>
+      <span class="day-type-tag tag-upper">Upper · ~55 min</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="day-body">
+      <div class="time-pills">
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">8 min lopen</span>
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">~42 min kracht</span>
+        <span class="time-pill" style="background:rgba(255,107,53,0.12);color:var(--upper)">5 min rekken</span>
+      </div>
+      <div class="pairing-intro">
+        <strong>Upper B = volume:</strong> Lichtere gewichten, hogere reps, meer pumpgevoel. Zelfde pairing-structuur als maandag. Na vandaag staan alle bovenlichaam spiergroepen op exact 15 sets voor de week.
+      </div>
+
+      <!-- PAAR 1 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">1</div>
+          <div class="pair-label" style="color:var(--muted)">COMPOUND PAAR — 4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Flat Dumbbell Press</div><div class="ex-note">Borst · Meer ROM dan barbell</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Single Arm Dumbbell Row</div><div class="ex-note">Rug dik · Volledige stretch onderaan</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 2 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">2</div>
+          <div class="pair-label" style="color:var(--muted)">COMPOUND PAAR — 4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Arnold Press</div><div class="ex-note">Schouders · Volledige rotatie voor maximale activatie</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Face Pull (kabel hoog)</div><div class="ex-note">Rug breed + rotator cuff · Essentieel boven 40 voor schoudergezondheid</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">15–20</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 3 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">3</div>
+          <div class="pair-label" style="color:var(--muted)">ISOLATIE PAAR — 3–4 rondes</div>
+          <span class="pair-rest">60 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Cable Fly (laag naar hoog)</div><div class="ex-note">Borst · Stretch onderaan vasthouden</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Upright Row (kabel)</div><div class="ex-note">Schouders achter · Ellebogen boven pols uitkomen</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 4 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">4</div>
+          <div class="pair-label" style="color:var(--muted)">ARMEN PAAR — 4 rondes</div>
+          <span class="pair-rest">60 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-push">PUSH</span><div class="ex-name">Skull Crusher (EZ-bar)</div><div class="ex-note">Triceps · Langzaam neer, volle stretch</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-pull">PULL</span><div class="ex-name">Preacher Curl (EZ-bar)</div><div class="ex-note">Biceps · Geen momentum mogelijk</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10–12</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="tip-box"><strong>Tip:</strong> Skull crusher en preacher curl zijn het perfecte antagonist paar — beide geïsoleerd, geen overlap. EZ-bar op beide is ook praktisch: je wisselt gewoon van greep op dezelfde stang.</div>
+    </div>
+  </div>
+
+  <!-- VRIJDAG LOWER B -->
+  <div class="day-card">
+    <div class="day-header" onclick="toggle(this)">
+      <div class="day-badge badge-lower">VR</div>
+      <div class="day-info">
+        <div class="day-name">VRIJDAG — LOWER B</div>
+        <div class="day-subtitle">Volume-focus · Bil/Ham ↕ Quad afwisselend · Geen lumbale belasting</div>
+      </div>
+      <span class="day-type-tag tag-lower">Lower · ~52 min</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="day-body">
+      <div class="time-pills">
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">8 min lopen</span>
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">~39 min kracht</span>
+        <span class="time-pill" style="background:rgba(168,85,247,0.12);color:var(--lower)">5 min rekken</span>
+      </div>
+      <div class="pairing-intro">
+        <strong>Lower B = volume:</strong> Na vandaag staan quads en hamstrings op 15 sets voor de week. Geen enkele oefening met lumbale belasting — bewust gekozen voor jouw onderrug.
+      </div>
+
+      <!-- PAAR 1 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">1</div>
+          <div class="pair-label" style="color:var(--muted)">COMPOUND PAAR — 4 rondes</div>
+          <span class="pair-rest">90 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag" style="background:rgba(34,211,165,0.15);color:var(--walk)">BIL</span><div class="ex-name">Hip Thrust (barbell)</div><div class="ex-note">Billen + hamstrings · Volledig samentrekken bovenaan · RIR 2</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">8–10</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">QUAD</span><div class="ex-name">Bulgarian Split Squat</div><div class="ex-note">Quadriceps · Achterste voet op bank, dumbbells — geen rugbelasting</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">10/kant</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- PAAR 2 -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">2</div>
+          <div class="pair-label" style="color:var(--muted)">ISOLATIE PAAR — 3–4 rondes</div>
+          <span class="pair-rest">60 sec tussen elke oefening</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag" style="background:rgba(34,211,165,0.15);color:var(--walk)">HAM</span><div class="ex-name">Nordic Hamstring Curl / Leg Curl</div><div class="ex-note">Hamstrings · Geen rugbelasting · Volle ROM</div></td>
+            <td><span class="sb">4</span></td><td><span class="rb">8–12</span></td>
+          </tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">QUAD</span><div class="ex-name">Leg Extension</div><div class="ex-note">Quadriceps · Isolatie, langzaam neer</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">12–15</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- ENKELVOUDIG -->
+      <div class="pair-block">
+        <div class="pair-header">
+          <div class="pair-number">3</div>
+          <div class="pair-label" style="color:var(--muted)">KUIT — ENKELVOUDIG · 3 sets</div>
+          <span class="pair-rest">60 sec rust</span>
+        </div>
+        <table class="exercise-table">
+          <tr><th>Oefening</th><th>Sets</th><th>Reps</th></tr>
+          <tr>
+            <td><span class="ex-tag ex-legs">KUIT</span><div class="ex-name">Seated Calf Raise</div><div class="ex-note">Soleus-focus · Gebogen knie · 3 sec excentrisch</div></td>
+            <td><span class="sb">3</span></td><td><span class="rb">15–20</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="tip-box"><strong>Tip:</strong> Hip thrust en split squat zijn het beste antagonist paar voor benen — volledig andere spieren, dus minimale vermoeidheidsoverlap. Na vandaag staat het volledige weekvolume op 15 sets voor alle spiergroepen.</div>
+    </div>
+  </div>
+
+  <!-- ZATERDAG WANDELEN -->
+  <div class="day-card">
+    <div class="day-header no-toggle">
+      <div class="day-badge badge-walk">ZA</div>
+      <div class="day-info">
+        <div class="day-name">ZATERDAG — ZONE 2 WANDELEN</div>
+        <div class="day-subtitle">45–60 min · 110–130 bpm · Herstel voor de rustdag</div>
+      </div>
+      <span class="day-type-tag tag-walk">Zone 2</span>
+    </div>
+    <div class="walk-body">
+      <div class="walk-grid">
+        <div class="walk-card"><h4>Duur</h4><p>45–60 minuten. Na een zware trainingsweek is zaterdag het ideale moment voor actief herstel.</p></div>
+        <div class="walk-card"><h4>Effect</h4><p>Verlaagt cortisol, versnelt spierherstel door verbeterde doorbloeding, verhoogt HRV richting de rustdag.</p></div>
+        <div class="walk-card"><h4>Optioneel</h4><p>Erg vermoeid? 30 min rustig wandelen op &lt;110 bpm is ook prima. Herstel gaat altijd voor training.</p></div>
+        <div class="walk-card"><h4>HRV check</h4><p>Meet zondagochtend je HRV — na 2 zone 2 dagen + rustdag zou die meetbaar hoger moeten zijn dan maandag.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZONDAG RUST -->
+  <div class="day-card" style="opacity:0.5">
+    <div class="day-header no-toggle">
+      <div class="day-badge badge-rest">ZO</div>
+      <div class="day-info">
+        <div class="day-name">ZONDAG — VOLLEDIGE RUST</div>
+        <div class="day-subtitle">Herstel · Slaap · Niets verplicht</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAAROM ANTAGONIST PAIRING WERKT -->
+  <div class="science-section">
+    <div class="section-title">WAAROM ANTAGONIST PAIRING WERKT</div>
+    <div class="science-grid">
+      <div class="science-card"><h4>Tijdsbesparing: 10–15 min</h4><p>Door push en pull af te wisselen herstelt elke spiergroep terwijl de andere werkt. Je kunt de rusttijd van 2.5 min naar 90 sec terugbrengen zonder prestatieverlies — cruciaal binnen je 60-minuten limiet.</p></div>
+      <div class="science-card"><h4>Geen krachtsverlies</h4><p>Robbins et al. toonden aan dat antagonist pairing de kracht op de tweede oefening niet vermindert. Je bent even sterk op de pull na de push — geen concessies aan het resultaat.</p></div>
+      <div class="science-card"><h4>Verhoogde spierprestatie</h4><p>Sommige studies tonen zelfs een lichte prestatieverbetering op de antagonist-oefening door reflexieve activatie. Bench press activeert licht de antagonist (rug), wat de volgende pull-up voorbereidt.</p></div>
+      <div class="science-card"><h4>Minder totale vermoeidheid</h4><p>Omdat elke spiergroep meer hersteltijd krijgt tussen sets (terwijl de andere werkt), bouw je minder lokale vermoeidheid op. Dit betekent meer kwaliteitssets per sessie.</p></div>
+      <div class="science-card"><h4>Eerste set altijd uitgerust</h4><p>De allereerste oefening van de dag doe je altijd volledig uitgerust — neem dan gewoon de volle rusttijd. Pas vanaf het tweede paar begin je met de kortere intervallen.</p></div>
+      <div class="science-card"><h4>Praktisch voor jou</h4><p>Upper A en B hebben 4 paren van 2 oefeningen. De tijdsvolgorde: paar uitvoeren → 90 sec → ander paar → 90 sec → terug. Geen complexe planning nodig in de gym.</p></div>
+    </div>
+  </div>
+
+  <!-- WETENSCHAP -->
+  <div class="science-section">
+    <div class="section-title">WAAROM DIT SCHEMA WERKT</div>
+    <div class="science-grid">
+      <div class="science-card"><h4>15 sets = sweet spot</h4><p>Krieger's meta-analyse (2010) toont 10–20 sets/spiergroep/week als optimaal bereik. 15 sets zit precies in het midden — maximale stimulus, haalbaar herstel.</p></div>
+      <div class="science-card"><h4>Upper/Lower = bewezen</h4><p>Een van de meest onderzochte en effectieve structuren voor gevorderde sporters. Elke spiergroep 2× per week met 48–72 uur herstel ertussen.</p></div>
+      <div class="science-card"><h4>Geen lumbale belasting</h4><p>Hack squat, cable pull-through, hip thrust, split squat, leg curl — alle beenoefeningen zijn bewust gekozen om de onderrug volledig te ontzien.</p></div>
+      <div class="science-card"><h4>Zone 2 verhoogt HRV</h4><p>2× per week 45–60 min wandelen op 110–130 bpm activeert het parasympathisch zenuwstelsel. HRV stijgt aantoonbaar binnen 3–4 weken.</p></div>
+      <div class="science-card"><h4>48+ hormoonprofiel</h4><p>Compound oefeningen (hack squat, hip thrust, dumbbell press, row) stimuleren testosteron en GH — cruciaal na je 40e voor spiergroei en vetverlies.</p></div>
+      <div class="science-card"><h4>RIR 2 = optimaal</h4><p>Bewezen vergelijkbare hypertrofie als trainen tot falen, bij significant minder herstelkosten en blessurerisico. Ideaal op 48+ met een gevoelige onderrug.</p></div>
+    </div>
+  </div>
+
+  <footer>Schema opgesteld op basis van wetenschappelijk bewezen methoden voor 48+ kracht- en compositietraining.<br>Raadpleeg een arts of fysiotherapeut bij twijfel over blessures of gezondheid.</footer>
+
+</div>
+<script>
+  function toggle(header) {
+    if (header.classList.contains('no-toggle')) return;
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.chevron');
+    if (!body || !body.classList.contains('day-body')) return;
+    if (body.classList.contains('open')) {
+      body.classList.remove('open');
+      if (chevron) chevron.style.transform = 'rotate(0deg)';
+    } else {
+      body.classList.add('open');
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+    }
+  }
+  document.querySelectorAll('.day-body.open').forEach(body => {
+    const chevron = body.previousElementSibling.querySelector('.chevron');
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+  });
+</script>
+</body>
+</html>
