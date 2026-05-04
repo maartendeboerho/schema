@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recomp Schema</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --border2: #3a3a48;
+    --text: #f0f0f4;
+    --muted: #7a7a8c;
+    --accent: #7b61ff;
+    --accent2: #a78bfa;
+    --green: #22c55e;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; overflow-x: hidden; }
+
+  .header {
+    padding: 1.75rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .header-left h1 { font-family: var(--sans); font-weight: 800; font-size: clamp(1.5rem,4vw,2.2rem); letter-spacing: -0.03em; line-height: 1; }
+  .header-left p { font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .glow { color: var(--accent2); }
+
+  .day-nav { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-btn {
+    flex: 1; min-width: 72px; padding: 0.9rem 0.5rem 0.8rem;
+    background: none; border: none; border-right: 1px solid var(--border);
+    color: var(--muted); font-family: var(--mono); font-size: 0.62rem;
+    cursor: pointer; text-align: center; letter-spacing: 0.06em; position: relative; transition: background 0.12s;
+  }
+  .day-btn:last-child { border-right: none; }
+  .day-btn .day-label { font-family: var(--sans); font-weight: 700; font-size: 0.82rem; display: block; margin-bottom: 3px; color: var(--text); }
+  .day-btn.rest-day .day-label { color: var(--muted); }
+  .day-btn.active { background: rgba(123,97,255,0.08); }
+  .day-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+  .day-type-tag { font-size: 0.58rem; letter-spacing: 0.07em; text-transform: uppercase; }
+
+  .main { display: flex; min-height: calc(100vh - 130px); }
+  .content { flex: 1; padding: 1.5rem 2rem 3rem; }
+  .sidebar { width: 260px; min-width: 260px; border-left: 1px solid var(--border); padding: 1.5rem 1.25rem; }
+  @media (max-width: 860px) { .sidebar { display: none; } .content { padding: 1rem 1rem 3rem; } }
+
+  .day-title { font-family: var(--sans); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .day-subtitle { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 1.5rem; }
+
+  .rest-view { padding: 3.5rem 2rem; text-align: center; color: var(--muted); }
+  .rest-view .rest-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .rest-view h2 { font-family: var(--sans); font-weight: 700; font-size: 1.2rem; color: var(--text); margin-bottom: 0.5rem; }
+  .rest-view p { font-size: 0.73rem; max-width: 300px; margin: 0 auto; line-height: 1.75; }
+  .rest-checklist { margin-top: 1.5rem; display: inline-flex; flex-direction: column; gap: 6px; text-align: left; }
+  .rest-check-item { font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .rest-check-item::before { content: '—'; color: var(--border2); }
+
+  .ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 0.875rem; overflow: hidden; }
+  .ex-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; background: var(--surface2); cursor: pointer; user-select: none; }
+  .ex-num { font-size: 0.62rem; color: var(--border2); min-width: 22px; font-weight: 500; }
+  .ex-name { font-family: var(--sans); font-weight: 600; font-size: 0.92rem; flex: 1; }
+  .ex-badge { font-size: 0.66rem; color: var(--accent2); background: rgba(123,97,255,0.13); padding: 2px 9px; border-radius: 2px; white-space: nowrap; font-weight: 500; }
+  .ex-chevron { color: var(--muted); font-size: 0.7rem; transition: transform 0.2s; }
+  .ex-chevron.open { transform: rotate(180deg); }
+
+  .ex-body { padding: 0 1rem 1rem; display: none; }
+  .ex-body.open { display: block; }
+
+  .meta-row { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 0.85rem 0; }
+  .meta-cell { flex: 1; padding: 0.55rem 0.6rem; border-right: 1px solid var(--border); text-align: center; }
+  .meta-cell:last-child { border-right: none; }
+  .mc-label { font-size: 0.57rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 3px; }
+  .mc-val { font-family: var(--sans); font-size: 0.88rem; font-weight: 700; color: var(--text); }
+
+  .sets-list { margin-bottom: 0.85rem; }
+  .set-row-info { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.7rem; }
+  .set-row-info:last-child { border-bottom: none; }
+  .sri-num { color: var(--border2); min-width: 20px; font-size: 0.62rem; }
+  .sri-reps { color: var(--text); font-weight: 500; flex: 1; }
+  .sri-rir { color: var(--muted); font-size: 0.65rem; }
+  .sri-rir span { color: var(--accent2); font-weight: 500; }
+
+  .ex-tip { background: rgba(123,97,255,0.05); border-left: 2px solid var(--accent); padding: 0.65rem 0.8rem; font-size: 0.69rem; color: var(--muted); line-height: 1.7; border-radius: 0 3px 3px 0; }
+  .tip-label { color: var(--accent2); font-size: 0.6rem; letter-spacing: 0.09em; text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 500; }
+  .emg-tag { display: block; margin-top: 7px; font-size: 0.62rem; color: var(--accent2); }
+  .emg-tag::before { content: '▸ '; }
+
+  .sb-title { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.9rem; font-weight: 500; }
+  .macro-block { margin-bottom: 1.5rem; }
+  .macro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .macro-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 0.6rem 0.4rem; text-align: center; }
+  .mc2-val { font-family: var(--sans); font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .mc2-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+  .kcal-line { font-size: 0.65rem; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  .rir-block { margin-top: 1.5rem; }
+  .rir-item { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.67rem; align-items: flex-start; }
+  .rir-item:last-child { border-bottom: none; }
+  .rir-num { color: var(--accent2); font-weight: 500; min-width: 38px; }
+  .rir-desc { color: var(--muted); line-height: 1.5; }
+  .rir-target { font-size: 0.58rem; background: rgba(123,97,255,0.15); color: var(--accent2); padding: 1px 5px; border-radius: 2px; margin-left: 4px; vertical-align: middle; }
+
+  .prog-block { margin-top: 1.5rem; }
+  .prog-item { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.67rem; }
+  .prog-item:last-child { border-bottom: none; }
+  .pi-label { color: var(--muted); margin-bottom: 2px; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.07em; }
+  .pi-val { color: var(--text); font-weight: 500; }
+
+  .eccentric-note { background: rgba(34,197,94,0.06); border-left: 2px solid var(--green); padding: 0.5rem 0.7rem; font-size: 0.67rem; color: var(--muted); margin-top: 1.5rem; border-radius: 0 3px 3px 0; line-height: 1.65; }
+  .eccentric-note strong { color: var(--green); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Recomp<span class="glow">.</span></h1>
+    <p>Maarten · 48jr · 82kg · 187cm · 4×/week</p>
+  </div>
+</div>
+
+<div class="day-nav" id="dayNav"></div>
+
+<div class="main">
+  <div class="content" id="mainContent"></div>
+  <div class="sidebar">
+    <div class="macro-block">
+      <div class="sb-title">Macros vandaag</div>
+      <div class="macro-grid">
+        <div class="macro-cell"><div class="mc2-val">180g</div><div class="mc2-label">eiwit</div></div>
+        <div class="macro-cell"><div class="mc2-val" id="sb-carbs">280g</div><div class="mc2-label">koolh.</div></div>
+        <div class="macro-cell"><div class="mc2-val" id="sb-fat">70g</div><div class="mc2-label">vet</div></div>
+      </div>
+      <div class="kcal-line" id="sb-kcal">Trainingsdag · ~2.490 kcal</div>
+    </div>
+    <div class="rir-block">
+      <div class="sb-title">RIR referentie</div>
+      <div class="rir-item"><span class="rir-num">RIR 0</span><span class="rir-desc">Geen rep meer mogelijk — vermijd op compound lifts</span></div>
+      <div class="rir-item"><span class="rir-num">RIR 1</span><span class="rir-desc">Eén rep over — bovengrens van je set</span></div>
+      <div class="rir-item"><span class="rir-num">RIR 2<span class="rir-target">target</span></span><span class="rir-desc">Twee reps over — optimale zone voor hypertrofie</span></div>
+      <div class="rir-item"><span class="rir-num">RIR 3</span><span class="rir-desc">Te licht — verhoog het gewicht bij volgende set</span></div>
+    </div>
+    <div class="prog-block">
+      <div class="sb-title">Progressie & uitvoering</div>
+      <div class="prog-item"><div class="pi-label">Methode</div><div class="pi-val">Dubbele progressie</div></div>
+      <div class="prog-item"><div class="pi-label">Wanneer omhoog?</div><div class="pi-val">Bereik bovengrens reps op alle sets → +2–5% gewicht</div></div>
+      <div class="prog-item"><div class="pi-label">Rust — compound</div><div class="pi-val">2–3 minuten</div></div>
+      <div class="prog-item"><div class="pi-label">Rust — isolatie</div><div class="pi-val">60–90 seconden</div></div>
+      <div class="prog-item"><div class="pi-label">Deload</div><div class="pi-val">Elke 4–6 weken · gewicht –40% · volume –50%</div></div>
+    </div>
+    <div class="eccentric-note">
+      <strong>Eccentrische fase (omlaag)</strong> — altijd 3 seconden gecontroleerd. ACSM 2026: eccentrische overload = significant meer hypertrofie.
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag','Zondag'];
+const DAYS_SHORT = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+
+const SCHEDULE = {
+  0: { type: 'rest', label: 'Rust' },
+  1: { type: 'train', label: 'Upper A', focus: 'Kracht · 6–8 reps', carbs: '280g', fat: '70g', kcal: '~2.490 kcal', kcalLabel: 'Trainingsdag',
+    exercises: [
+      { name: 'Barbell Bench Press', sets: 4, reps: '6–8', rir: '2', equip: 'Barbell + bank',
+        tip: 'Schouderbladen samenknijpen en in de bank drukken. Bar naar onderkant borst laten zakken. Eccentrsch 3 tellen omlaag. Brede greep = meer pec-activatie. Ellebogen op 45–75° van torso.',
+        emg: 'EMG top-3 borstoefening · anteriore delt 79%' },
+      { name: 'Incline DB Press', sets: 3, reps: '8–10', rir: '2', equip: 'Dumbells + schuine bank 30–45°',
+        tip: 'Bank niet hoger dan 45° — anders worden delts primair. Ellebogen op 45° van torso. Bewust stretchen in onderste positie voor maximale pec-activatie bovenste deel.',
+        emg: 'Maximale bovenste pec activatie op 30–45°' },
+      { name: 'Barbell Row (overhand)', sets: 4, reps: '6–8', rir: '2', equip: 'Barbell',
+        tip: 'Torso 45° voorover, rug recht. Bar naar navel trekken — niet naar borst. Ellebogen naast lichaam. Schouderbladen volledig samentrekken in eindpositie.',
+        emg: 'Hoogste algehele rugactivatie · lat + rhomboids + traps' },
+      { name: 'Lat Pulldown (brede greep)', sets: 3, reps: '8–10', rir: '2', equip: 'Kabelstation',
+        tip: 'Licht achterover leunen. Bar naar borst, niet naar kin. Ellebogen omlaag en achteren, niet zijwaarts. Lats bewust aanspannen voor de beweging begint.',
+        emg: 'Geïsoleerde lat-breedte · constante spanning via kabel' },
+      { name: 'Overhead Press (barbell)', sets: 3, reps: '6–8', rir: '2', equip: 'Barbell',
+        tip: 'Staand of zittend. Core aanspannen. Bar langs oor omhoog — geen boogbeweging. Volledig uitstrekken bovenin. Hoofd licht naar voren voor de bar, daarna terug.',
+        emg: 'Anteriore delt 79% + laterale delt 66% EMG-activatie' },
+      { name: 'Cable Lateral Raise', sets: 3, reps: '12–15', rir: '1–2', equip: 'Kabelstation laag',
+        tip: 'Kabel op heupinstelling. Arm licht gebogen. Tot schouderhoogte opheffen, niet hoger. Kabel geeft constante spanning onderaan — voordeel vs. dumbbell waar spanning wegvalt.',
+        emg: 'Superieur vs. dumbbell · constante spanning in volledige ROM' }
+    ]
+  },
+  2: { type: 'cardio', label: 'Zone 2 Cardio', focus: 'Actief herstel · 35–40 min', carbs: '160g', fat: '75g', kcal: '~2.075 kcal', kcalLabel: 'Rustdag',
+    exercises: [
+      { name: 'Zone 2 Cardio', sets: 1, reps: '35–40 min', rir: '—', equip: 'Loopband / fiets / roeier',
+        tip: 'Hartslagzone 60–70% HRmax. Vuistregel: je kunt een volledige zin uitspreken zonder buiten adem te raken. Niet harder. Verbetert mitochondriale dichtheid zonder cortisolpiek.',
+        emg: 'Optimale vetoxidatie + aerobe basis zonder herstelcost' },
+      { name: 'Mobiliteit & Stretching', sets: 1, reps: '10–15 min', rir: '—', equip: 'Mat',
+        tip: 'Focus op heupen, thoracale wervelkolom en schouders. Houd elke stretch 30–60 seconden. Lichte foam rolling toegestaan. Geen pijn — alleen spanning.',
+        emg: 'Actief herstel verlaagt spiertonus en cortisolniveaus' }
+    ]
+  },
+  3: { type: 'train', label: 'Lower A', focus: 'Kracht · 6–8 reps', carbs: '280g', fat: '70g', kcal: '~2.490 kcal', kcalLabel: 'Trainingsdag',
+    exercises: [
+      { name: 'Barbell Back Squat', sets: 4, reps: '6–8', rir: '2', equip: 'Squat rack',
+        tip: 'Voeten op schouderbreedte, tenen 15–30° naar buiten. Tot parallel of dieper. Knieën boven tenen. Borst omhoog, rug recht. Eccentrsch 3 tellen omlaag. Heupen en schouders gelijktijdig omhoog.',
+        emg: 'Hoogste quad + hamstring + glute activatie van alle beenoefeningen' },
+      { name: 'Romanian Deadlift', sets: 3, reps: '8–10', rir: '2', equip: 'Barbell',
+        tip: 'Benen licht gebogen, blijven zo. Bar dicht langs benen naar beneden glijden. Heupen naar achter duwen — niet omlaagbuigen. Stop als je hamstrings stretchen voelt. Rug recht houden.',
+        emg: 'Maximale hamstring-rekoverload in verlengde positie' },
+      { name: 'Bulgarian Split Squat', sets: 3, reps: '8–10', rir: '2', equip: 'Bank + dumbells',
+        tip: 'Achterste voet op bank. Voorste voet ver genoeg voor: knie boven enkel in onderste positie. Recht omlaag zakken. Glute van voorste been is primair. Begin licht — zwaarder dan het lijkt.',
+        emg: 'Hoge glute-activatie · corrigeert links/rechts balans' },
+      { name: 'Leg Curl (liggend)', sets: 3, reps: '10–12', rir: '2', equip: 'Leg curl machine',
+        tip: 'Heupen op de bank drukken, niet laten omhoogkomen. Volledig uitstrekken onderaan voor gelengde positie-activatie. Eccentrisch 2 tellen laten zakken.',
+        emg: 'Hamstring-isolatie in verlengde positie = maximale hypertrofie' },
+      { name: 'Calf Raise (staand)', sets: 4, reps: '12–15', rir: '1–2', equip: 'Machine of stapel',
+        tip: 'Volledig zakken tot kuit volledig strekt — dit is het cruciale punt. Bovenin 1 seconde vasthouden. Kuiten reageren beter op hoog volume dan de meeste spiergroepen.',
+        emg: 'Volledige ROM essentieel · hoog volume noodzakelijk voor kuitgroei' }
+    ]
+  },
+  4: { type: 'rest', label: 'Rust / Wandelen', cardioNote: 'Optioneel: 20–30 min rustige wandeling' },
+  5: { type: 'train', label: 'Upper B', focus: 'Hypertrofie · 10–15 reps', carbs: '280g', fat: '70g', kcal: '~2.490 kcal', kcalLabel: 'Trainingsdag',
+    exercises: [
+      { name: 'DB Incline Press', sets: 4, reps: '10–12', rir: '1–2', equip: 'Dumbells + schuine bank',
+        tip: 'Grotere ROM dan barbell. Elke zij onafhankelijk = minder overcompensatie door sterke kant. Dumbells bewust dicht bij elkaar bovenin voor betere pec-activatie. Langzame eccentrische fase.',
+        emg: 'Maximale bovenste pec + onafhankelijke belasting per zijde' },
+      { name: 'Cable Fly (mid-crossover)', sets: 3, reps: '12–15', rir: '1–2', equip: 'Kabelstation midden',
+        tip: 'Kabels op schouderhoogte. Armen licht gebogen gedurende gehele beweging. Denk "borst omhelzen". Constante spanning door hele ROM — voordeel vs. dumbbell fly.',
+        emg: 'EMG gelijk aan pec deck · constante spanning + maximale pec-isolatie' },
+      { name: 'Single-arm DB Row', sets: 4, reps: '10–12', rir: '2', equip: 'Dumbbell + bank',
+        tip: 'Hand en knie op bank. Elleboog omhoog en licht naar achter. Volledig bereik: schouder laten zakken onderaan, schouderblad volledig samentrekken bovenaan. Geen rotatie van de romp.',
+        emg: 'Diepe lat + rhomboid activatie · corrigeert links/rechts imbalans' },
+      { name: 'Face Pull (kabel)', sets: 3, reps: '15–20', rir: '1–2', equip: 'Kabelstation hoog + touw',
+        tip: 'Kabel op of boven ooghoogte. Touw naar gezicht trekken, handen langs oren eindigen. Schouders extern roteren. Beschermt de rotatormanchet — niet overslaan. Licht gewicht, perfecte techniek.',
+        emg: 'Posteriore delt + externe rotatie · schouderhealth essentieel op 48+' },
+      { name: 'Barbell Curl', sets: 3, reps: '10–12', rir: '1–2', equip: 'Barbell of EZ-bar',
+        tip: 'Ellebogen naast torso — bewegen niet mee. Geen swing. Supineer in eindpositie voor maximale activatie. EZ-bar is polsvriendelijker. Langzaam laten zakken (3 tellen).',
+        emg: 'Zwaarste bicep-belasting · maximale krachtontwikkeling' },
+      { name: 'Tricep Pushdown (kabel)', sets: 3, reps: '12–15', rir: '1–2', equip: 'Kabelstation + bar of touw',
+        tip: 'Ellebogen langs torso, bewegen niet mee. Volledig uitstrekken onderaan. Touw geeft externe rotatie = extra tricep-activatie in eindpositie. Constante spanning via kabel.',
+        emg: 'Constante spanning · effectief in verlengde positie' }
+    ]
+  },
+  6: { type: 'train', label: 'Lower B', focus: 'Hypertrofie + Power · 10–15 reps', carbs: '280g', fat: '70g', kcal: '~2.490 kcal', kcalLabel: 'Trainingsdag',
+    exercises: [
+      { name: 'Leg Press', sets: 4, reps: '10–12', rir: '1–2', equip: 'Leg press machine',
+        tip: 'Voeten hoog op platform = meer glutes en hamstrings. Voeten laag = meer quads. Volledig uitstrekken zonder knieën te sluiten. Minder spinale belasting dan squat — ideaal als tweede beendag.',
+        emg: 'Hoog volume zonder spinale belasting na squat-dag' },
+      { name: 'Hip Thrust (barbell)', sets: 4, reps: '10–12', rir: '1–2', equip: 'Bank + barbell + pad',
+        tip: 'Schouderbladen op bank. Barbell op heupbotten — gebruik altijd een pad. Billen samentrekken bovenin, niet met onderrug omhoogkomen. Heupen volledig uitstrekken. Voeten plat.',
+        emg: 'HOOGSTE glute max activatie van alle oefeningen (EMG)' },
+      { name: 'Leg Extension', sets: 3, reps: '12–15', rir: '1–2', equip: 'Leg extension machine',
+        tip: 'Recht zitten. Volledig uitstrekken en 1 seconde vasthouden bovenin. Langzaam laten zakken (2–3 tellen). Aanvullend op leg press voor volledige quad-dekking.',
+        emg: 'Quad-isolatie in verkorte positie · aanvullend op compound' },
+      { name: 'Seated Leg Curl', sets: 3, reps: '10–12', rir: '2', equip: 'Seated leg curl machine',
+        tip: 'Zittende positie plaatst hamstrings in verlengde positie = superieur vs. liggend voor hypertrofie. Volledig uitstrekken onderaan is het kritieke punt. Eccentrisch bewust vertragen.',
+        emg: 'Verlengde positie = maximale hamstring-hypertrofie' },
+      { name: 'Box Jump (explosief)', sets: 3, reps: '5', rir: '—', equip: 'Plyo box 40–60cm',
+        tip: 'Uitgerust doen — begin van sessie of na warming-up. Zachte landing, diep door de knieën. Stap terug af de box, spring niet terug. ACSM 2026: power daalt sneller dan kracht bij ouder worden.',
+        emg: 'Power-training preventief · ACSM 2026: kritiek voor functionele gezondheid 48+' }
+    ]
+  }
+};
+
+let currentDay = (new Date().getDay() + 6) % 7;
+
+function renderNav() {
+  const nav = document.getElementById('dayNav');
+  nav.innerHTML = '';
+  DAYS_SHORT.forEach((d, i) => {
+    const s = SCHEDULE[i];
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (s.type === 'rest' ? ' rest-day' : '') + (i === currentDay ? ' active' : '');
+    const typeLabel = s.type === 'rest' ? 'rust' : s.type === 'cardio' ? 'cardio' : s.label.toLowerCase();
+    btn.innerHTML = `<span class="day-label">${d}</span><span class="day-type-tag">${typeLabel}</span>`;
+    btn.addEventListener('click', () => {
+      currentDay = i;
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderContent();
+    });
+    nav.appendChild(btn);
+  });
+}
+
+function renderContent() {
+  const s = SCHEDULE[currentDay];
+  const content = document.getElementById('mainContent');
+
+  if (s.carbs) {
+    document.getElementById('sb-carbs').textContent = s.carbs;
+    document.getElementById('sb-fat').textContent = s.fat;
+    document.getElementById('sb-kcal').textContent = s.kcalLabel + ' · ' + s.kcal;
+  } else {
+    document.getElementById('sb-carbs').textContent = '160g';
+    document.getElementById('sb-fat').textContent = '75g';
+    document.getElementById('sb-kcal').textContent = 'Rustdag · ~2.075 kcal';
+  }
+
+  if (s.type === 'rest') {
+    const extra = s.cardioNote ? '<div class="rest-check-item">' + s.cardioNote + '</div>' : '';
+    content.innerHTML = '<div class="rest-view"><div class="rest-icon">🌙</div><h2>' + DAYS[currentDay] + ' — Rustdag</h2><p>Herstel is geen optie, het is training. Cortisol daalt, spierweefsel repareert, supercompensatie vindt plaats.</p><div class="rest-checklist"><div class="rest-check-item">Slaap 7–9 uur</div><div class="rest-check-item">7.000+ stappen</div><div class="rest-check-item">Stress laag houden</div><div class="rest-check-item">Eiwit 180g aanhouden ook op rustdag</div>' + extra + '</div></div>';
+    return;
+  }
+
+  let html = '<div class="day-title">' + DAYS[currentDay] + '</div><div class="day-subtitle">' + s.label + ' · ' + s.focus + '</div>';
+
+  s.exercises.forEach(function(ex, ei) {
+    let setsRows = '';
+    for (let i = 0; i < ex.sets; i++) {
+      setsRows += '<div class="set-row-info"><span class="sri-num">' + (i+1) + '</span><span class="sri-reps">' + ex.reps + ' reps</span><span class="sri-rir">RIR <span>' + ex.rir + '</span></span></div>';
+    }
+    const num = (ei + 1) < 10 ? '0' + (ei + 1) : (ei + 1);
+    html += '<div class="ex-card"><div class="ex-header" onclick="toggleEx(' + ei + ')"><span class="ex-num">' + num + '</span><span class="ex-name">' + ex.name + '</span><span class="ex-badge">' + ex.sets + '\xD7' + ex.reps + '</span><span class="ex-chevron" id="chev-' + ei + '">\u25BE</span></div><div class="ex-body" id="exb-' + ei + '"><div class="meta-row"><div class="meta-cell"><div class="mc-label">Sets</div><div class="mc-val">' + ex.sets + '</div></div><div class="meta-cell"><div class="mc-label">Reps</div><div class="mc-val">' + ex.reps + '</div></div><div class="meta-cell"><div class="mc-label">RIR</div><div class="mc-val">' + ex.rir + '</div></div><div class="meta-cell"><div class="mc-label">Materiaal</div><div class="mc-val" style="font-size:0.72rem">' + ex.equip + '</div></div></div><div class="sets-list">' + setsRows + '</div><div class="ex-tip"><span class="tip-label">Techniek & wetenschap</span>' + ex.tip + '<span class="emg-tag">' + ex.emg + '</span></div></div></div>';
+  });
+
+  content.innerHTML = html;
+}
+
+function toggleEx(ei) {
+  const body = document.getElementById('exb-' + ei);
+  const chev = document.getElementById('chev-' + ei);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+renderNav();
+renderContent();
+</script>
+</body>
+</html>
