@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --border: #272727;
+  --text: #ffffff;
+  --muted: #999;
+  --muted2: #ccc;
+  --yellow: #d4ff00;
+  --green: #00ff88;
+  --amber: #ffaa00;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+
+/* ── HEADER ── */
+.header {
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-family: var(--sans); font-weight: 800;
+  font-size: 2rem; letter-spacing: -0.04em; line-height: 1;
+}
+.header h1 em { color: var(--yellow); font-style: normal; }
+.header-sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.04em; }
+
+/* ── PHASE SELECTOR ── */
+.phase-bar {
+  display: flex; padding: 1rem 1.25rem; gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  align-items: center; flex-wrap: wrap;
+}
+.phase-label { font-size: 0.75rem; color: var(--muted); margin-right: 0.25rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.ph-btn {
+  padding: 0.5rem 1rem; border-radius: 3px; border: 1px solid var(--border);
+  background: none; font-family: var(--mono); font-size: 0.8rem;
+  cursor: pointer; color: var(--muted); transition: all 0.15s; letter-spacing: 0.02em;
+}
+.ph-btn.active-rehab { background: rgba(255,170,0,0.1); border-color: var(--amber); color: var(--amber); }
+.ph-btn.active-build  { background: rgba(212,255,0,0.08); border-color: var(--yellow); color: var(--yellow); }
+.ph-btn.active-full   { background: rgba(0,255,136,0.08); border-color: var(--green); color: var(--green); }
+.phase-info { font-size: 0.75rem; color: var(--muted); margin-left: auto; }
+
+/* ── DAY TABS ── */
+.day-tabs {
+  display: flex; overflow-x: auto; border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+.dt {
+  flex: 1; min-width: 60px; padding: 0.9rem 0.25rem 0.8rem;
+  background: none; border: none; border-right: 1px solid var(--border);
+  cursor: pointer; text-align: center; position: relative; transition: background 0.12s;
+}
+.dt:last-child { border-right: none; }
+.dt-short { font-family: var(--sans); font-weight: 700; font-size: 1rem; display: block; color: var(--text); }
+.dt-type  { font-size: 0.65rem; color: var(--muted); display: block; margin-top: 3px; }
+.dt.active { background: rgba(212,255,0,0.05); }
+.dt.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--yellow); }
+.dt.is-rest .dt-short { color: var(--border); }
+.dt.is-rest .dt-type  { color: var(--border); }
+
+/* ── CONTENT ── */
+.content { padding: 1.25rem 1.25rem 4rem; max-width: 700px; }
+
+/* Day title */
+.day-title { margin-bottom: 1.25rem; }
+.day-title h2 { font-family: var(--sans); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; }
+.day-title p  { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+
+/* ── EXERCISE CARDS ── */
+.ex-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 5px; margin-bottom: 0.75rem; overflow: hidden;
+}
+.ex-card.is-ss { border-color: rgba(0,255,136,0.2); }
+
+.ex-top {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.9rem 1rem; cursor: pointer; user-select: none;
+}
+.ex-num { font-size: 0.7rem; color: var(--border); min-width: 20px; }
+.ex-name { font-family: var(--sans); font-weight: 700; font-size: 1rem; flex: 1; line-height: 1.3; }
+.ex-meta { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
+.ex-sets-reps { font-size: 0.8rem; color: var(--muted2); white-space: nowrap; }
+.ex-rir { font-size: 0.7rem; padding: 2px 8px; border-radius: 2px; background: rgba(212,255,0,0.1); color: var(--yellow); white-space: nowrap; }
+.ex-weight { font-family: var(--sans); font-weight: 700; font-size: 1rem; white-space: nowrap; }
+.ss-tag { font-size: 0.65rem; padding: 2px 7px; border-radius: 2px; background: rgba(0,255,136,0.1); color: var(--green); }
+.spine-tag { font-size: 0.65rem; padding: 2px 7px; border-radius: 2px; background: rgba(255,170,0,0.1); color: var(--amber); }
+.chev { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; flex-shrink: 0; }
+.chev.open { transform: rotate(180deg); }
+
+.ex-detail { display: none; padding: 0 1rem 0.9rem 1rem; }
+.ex-detail.open { display: block; }
+.ex-tip {
+  font-size: 0.8rem; color: var(--muted2); line-height: 1.75;
+  border-left: 2px solid var(--yellow); padding: 0.6rem 0.85rem;
+  background: rgba(212,255,0,0.03); border-radius: 0 3px 3px 0;
+}
+.ex-tip.amber { border-left-color: var(--amber); background: rgba(255,170,0,0.03); }
+.tip-lbl { font-size: 0.65rem; color: var(--yellow); letter-spacing: 0.07em; text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600; }
+.tip-lbl.amber { color: var(--amber); }
+
+/* ── BLOCKS ── */
+.note {
+  font-size: 0.8rem; color: var(--muted2); line-height: 1.75;
+  border-left: 2px solid var(--yellow); padding: 0.65rem 0.9rem;
+  background: rgba(212,255,0,0.03); border-radius: 0 3px 3px 0;
+  margin-bottom: 0.75rem;
+}
+.note.amber { border-left-color: var(--amber); background: rgba(255,170,0,0.03); }
+.note.green { border-left-color: var(--green); background: rgba(0,255,136,0.03); }
+.note strong { color: var(--yellow); }
+.note.amber strong { color: var(--amber); }
+.note.green strong { color: var(--green); }
+
+.mcgill-block {
+  background: rgba(255,170,0,0.04); border: 1px solid rgba(255,170,0,0.18);
+  border-radius: 4px; padding: 0.85rem 1rem; margin-bottom: 0.85rem;
+}
+.blk-title { font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 600; margin-bottom: 0.65rem; }
+.blk-title.amber { color: var(--amber); }
+.blk-title.green { color: var(--green); }
+.blk-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,170,0,0.1); font-size: 0.78rem; }
+.blk-row:last-child { border-bottom: none; }
+.blk-row span:first-child { color: var(--muted2); }
+.blk-row span:last-child  { color: var(--amber); font-weight: 500; }
+
+.morning-block {
+  background: rgba(0,255,136,0.03); border: 1px solid rgba(0,255,136,0.14);
+  border-radius: 4px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+}
+.morning-block .blk-row { border-bottom-color: rgba(0,255,136,0.08); }
+.morning-block .blk-row span:last-child { color: var(--green); }
+
+.rest-view { padding: 3rem 0; text-align: center; }
+.rest-view .ri { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.rest-view h3  { font-family: var(--sans); font-weight: 700; font-size: 1.2rem; margin-bottom: 0.6rem; }
+.rest-view p   { font-size: 0.82rem; color: var(--muted2); line-height: 1.85; max-width: 280px; margin: 0 auto; }
+
+/* ── WEEK INFO ── */
+.week-info {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.wi-left { display: flex; flex-direction: column; gap: 3px; }
+.wi-week { font-family: var(--sans); font-weight: 800; font-size: 1.1rem; color: var(--text); }
+.wi-date { font-size: 0.75rem; color: var(--muted); }
+.wi-phase { font-size: 0.72rem; padding: 3px 10px; border-radius: 2px; font-weight: 600; letter-spacing: 0.04em; }
+.wi-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.wi-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.wi-bar { width: 120px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.wi-fill { height: 100%; border-radius: 2px; background: var(--yellow); transition: width 0.5s; }
+.wi-pct { font-size: 0.72rem; color: var(--yellow); font-weight: 500; min-width: 35px; text-align: right; }
+.wi-next { font-size: 0.68rem; color: var(--muted); }
+
+/* ── DELOAD BANNER ── */
+.deload-banner {
+  background: rgba(0,255,136,0.04); border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 5px; padding: 1.25rem 1rem; margin-bottom: 1.25rem; text-align: center;
+}
+.db-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.db-title { font-family: var(--sans); font-weight: 800; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.db-desc { font-size: 0.8rem; color: var(--muted2); line-height: 1.75; }
+.db-rules { margin-top: 1rem; display: inline-flex; flex-direction: column; gap: 5px; text-align: left; }
+.db-rule { font-size: 0.78rem; color: var(--green); display: flex; align-items: center; gap: 8px; }
+.db-rule::before { content: '—'; color: rgba(0,255,136,0.4); }
+
+/* ── WEEK PROGRESS ── */
+.week-prog { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+.wp-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.wp-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.wp-fill { height: 100%; border-radius: 2px; background: var(--yellow); transition: width 0.4s; }
+.wp-pct { font-size: 0.75rem; color: var(--yellow); font-weight: 500; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Training<em>.</em></h1>
+  <div class="header-sub">Maarten · 48jr · 82kg · Start 6 mei</div>
+</div>
+
+<!-- WEEK INFO + PHASE SELECTOR -->
+<div class="week-info" id="weekInfo"></div>
+<div class="phase-bar">
+  <span class="phase-label">Fase</span>
+  <button class="ph-btn" id="ph-rehab"  onclick="setPhase('rehab')">🔶 Rehab</button>
+  <button class="ph-btn" id="ph-deload" onclick="setPhase('deload')">😴 Deload</button>
+  <button class="ph-btn" id="ph-build"  onclick="setPhase('build')">⚡ Opbouw</button>
+  <button class="ph-btn" id="ph-full"   onclick="setPhase('full')">✅ Volledig</button>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs" id="dayTabs"></div>
+
+<!-- CONTENT -->
+<div class="content" id="content"></div>
+
+<script>
+// ─── DATA ───────────────────────────────
+
+const BASE = { squat:40, rdl:60, bss:14, hack:80, hipthrust:60, legcurl:50, calfstand:95, calfseat:30 };
+const SPINE = ['squat','rdl','bss'];
+
+const PHASES = {
+  rehab:  { pct:50, label:'50% op rugbelaste oefeningen', prog:25 },
+  build:  { pct:72, label:'72% op rugbelaste oefeningen', prog:65 },
+  full:   { pct:85, label:'85% op rugbelaste oefeningen', prog:90 },
+  deload: { pct:50, label:'Deload — gewicht –40%, volume –50%', prog:50 },
+};
+
+const WEEKS = [
+  { w:1, start:'6 mei', end:'12 mei', phase:'rehab', pct:50, lbl:'Rehab 1', desc:'Activeren & ontspannen' },
+  { w:2, start:'13 mei', end:'19 mei', phase:'rehab', pct:50, lbl:'Rehab 2', desc:'Activeren & ontspannen' },
+  { w:3, start:'20 mei', end:'26 mei', phase:'rehab', pct:50, lbl:'Rehab 3', desc:'Stabiliteit opbouwen' },
+  { w:4, start:'27 mei', end:'2 jun', phase:'rehab', pct:50, lbl:'Rehab 4', desc:'Stabiliteit opbouwen' },
+  { w:5, start:'3 jun', end:'9 jun', phase:'deload', pct:50, lbl:'Deload', desc:'Gewicht –40% · Volume –50% · Herstel' },
+  { w:6, start:'10 jun', end:'16 jun', phase:'build', pct:72, lbl:'Opbouw', desc:'Progressief belasten' },
+  { w:7, start:'17 jun', end:'23 jun', phase:'build', pct:72, lbl:'Opbouw', desc:'Progressief belasten' },
+  { w:8, start:'24 jun', end:'30 jun', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:9, start:'1 jul', end:'7 jul', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:10, start:'8 jul', end:'14 jul', phase:'deload', pct:50, lbl:'Deload', desc:'Gewicht –40% · Volume –50% · Herstel' },
+  { w:11, start:'15 jul', end:'21 jul', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:12, start:'22 jul', end:'28 jul', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:13, start:'29 jul', end:'4 aug', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:14, start:'5 aug', end:'11 aug', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' },
+  { w:15, start:'12 aug', end:'18 aug', phase:'deload', pct:50, lbl:'Deload', desc:'Gewicht –40% · Volume –50% · Herstel' },
+  { w:16, start:'19 aug', end:'25 aug', phase:'full', pct:85, lbl:'Volledig', desc:'Werkgewicht' }
+];
+
+function getCurrentWeek() {
+  const start = new Date(2026, 4, 6); // May 6 2026
+  const now = new Date();
+  const diff = Math.floor((now - start) / (7 * 24 * 3600 * 1000));
+  const idx = Math.max(0, Math.min(diff, WEEKS.length - 1));
+  return WEEKS[idx];
+}
+
+function calcKg(id, phase) {
+  if (!SPINE.includes(id)) return BASE[id];
+  const raw = BASE[id] * PHASES[phase].pct / 100;
+  return Math.round(raw / 2.5) * 2.5;
+}
+function fmtKg(id, phase) {
+  const kg = calcKg(id, phase);
+  const s = id === 'bss' ? '/db' : '';
+  return (Number.isInteger(kg) ? kg : kg.toFixed(1)) + ' kg' + s;
+}
+function wColor(id, phase) {
+  if (!SPINE.includes(id)) return 'c-green';
+  const p = PHASES[phase].pct;
+  if (p <= 55) return 'c-amber';
+  if (p <= 75) return 'c-yellow';
+  return 'c-green';
+}
+
+// ─── SCHEDULE ───────────────────────────
+
+const DAYS = [
+  { key:'ma', short:'Ma', name:'Maandag',   type:'upperA', lbl:'Upper A' },
+  { key:'di', short:'Di', name:'Dinsdag',   type:'rest',   lbl:'Rust' },
+  { key:'wo', short:'Wo', name:'Woensdag',  type:'upperB', lbl:'Upper B' },
+  { key:'do', short:'Do', name:'Donderdag', type:'rest',   lbl:'Rust' },
+  { key:'vr', short:'Vr', name:'Vrijdag',   type:'lowerA', lbl:'Lower A' },
+  { key:'za', short:'Za', name:'Zaterdag',  type:'upperC', lbl:'Upper C' },
+  { key:'zo', short:'Zo', name:'Zondag',    type:'lowerB', lbl:'Lower B' },
+];
+
+// Upper A — Borst + Rug + Armen (kracht)
+const UPPER_A = [
+  { n:'Barbell Bench Press',   sets:4, reps:'6–8',   rir:'2',   ss:false,
+    tip:'Set 1 = 50% opwarm · Set 2 = 75% · Set 3–4 = werkgewicht. Schouderbladen samenknijpen in de bank. Bar naar onderkant borst. Eccentrisch 3 tellen.' },
+  { n:'Incline DB Press',      sets:3, reps:'8–10',  rir:'2',   ss:false,
+    tip:'30–45° bank. Elke zij onafhankelijk = minder overcompensatie. Bewust stretchen onderaan. Eccentrisch 3 tellen.' },
+  { n:'Barbell Row (overhand)',sets:4, reps:'6–8',   rir:'2',   ss:false,
+    tip:'Torso 45° voorover, rug recht. Bar naar navel — niet naar borst. Schouderbladen volledig samentrekken in eindpositie. Eccentrisch 2 tellen.' },
+  { n:'Lat Pulldown',          sets:3, reps:'8–10',  rir:'2',   ss:false,
+    tip:'Licht achterover leunen. Bar naar borst. Ellebogen omlaag en achteren. Lats bewust aanspannen vóór de beweging begint.' },
+  { n:'Cable Curl (stang)',    sets:3, reps:'10–12', rir:'1–2', ss:true,
+    tip:'SUPERSET met Tricep Pushdown. Kabel laag. Ellebogen naast torso — bewegen niet. Constante spanning door volledige ROM. Langzaam laten zakken.' },
+  { n:'Tricep Pushdown (touw)',sets:3, reps:'12–15', rir:'1–2', ss:true,
+    tip:'SUPERSET met Cable Curl. Kabel hoog. Ellebogen langs torso. Volledig uitstrekken onderaan. Laatste set: rest-pause 15 sec + 3–5 extra reps.' },
+];
+
+// Upper B — Schouders + Armen
+const UPPER_B = [
+  { n:'DB Shoulder Press',          sets:3, reps:'8–10',  rir:'2',   ss:false,
+    tip:'Bank op 90°. Dumbells op schouderhoogte. Vrije beweging — veiliger dan barbell. Volledig uitstrekken bovenin zonder te sluiten.' },
+  { n:'Cable Lateral Raise',        sets:3, reps:'12–15', rir:'1–2', ss:true,
+    tip:'SUPERSET met Face Pull. Kabel laag. Arm licht gebogen. Tot schouderhoogte — niet hoger. Constante spanning door volledige ROM.' },
+  { n:'Face Pull (kabel)',           sets:3, reps:'15–20', rir:'1–2', ss:true,
+    tip:'SUPERSET met Lateral Raise. Kabel boven ooghoogte. Touw naar gezicht. Handen langs oren. Extern roteren. Niet overslaan — beschermt rotatormanchet.' },
+  { n:'Cable Curl (stang)',          sets:4, reps:'10–12', rir:'1–2', ss:true,
+    tip:'SUPERSET met Tricep Pushdown. Kabel laag, stang. Ellebogen naast torso. Constante spanning. Langzaam laten zakken (3 tellen).' },
+  { n:'Tricep Pushdown (touw)',     sets:4, reps:'12–15', rir:'1–2', ss:true,
+    tip:'SUPERSET met Cable Curl. Kabel hoog. Volledig uitstrekken. Touw geeft externe rotatie = extra activatie. Laatste set: rest-pause.' },
+  { n:'Triceps Overhead Extension', sets:3, reps:'10–12', rir:'1–2', ss:false,
+    tip:'Kabel hoog, touw. Wegdraaien van station. Ellebogen naast oren. Alleen onderarmen bewegen. Lange kop maximaal actief in gestrekte positie.' },
+];
+
+// Upper C — Borst + Rug + Schouders (hypertrofie)
+const UPPER_C = [
+  { n:'DB Incline Press',       sets:3, reps:'10–12', rir:'1–2', ss:false,
+    tip:'Hypertrofie focus — iets lichter dan maandag. 30–45° bank. Set 1 als opwarm op 60%. Dumbells dicht bij elkaar bovenin voor betere pec-activatie.' },
+  { n:'Cable Fly',               sets:3, reps:'12–15', rir:'1–2', ss:false,
+    tip:'Kabels op schouderhoogte. Armen licht gebogen gedurende hele beweging. Denk: borst omhelzen. Constante spanning — voordeel vs. dumbbell fly.' },
+  { n:'Single-arm DB Row',      sets:3, reps:'10–12', rir:'2',   ss:false,
+    tip:'Hand + knie op bank. Elleboog omhoog en licht naar achter. Schouder laten zakken onderaan. Schouderblad volledig samentrekken bovenaan.' },
+  { n:'Lat Pulldown (neutraal)',sets:3, reps:'10–12', rir:'2',   ss:false,
+    tip:'V-bar of neutrale greep. Licht achterover leunen. Ellebogen omlaag en achteren. Complementair aan brede greep van maandag.' },
+  { n:'Cable Lateral Raise',    sets:3, reps:'12–15', rir:'1–2', ss:true,
+    tip:'SUPERSET met Face Pull. Tweede wekelijkse laterale delt stimulus. Kabel laag. Arm licht gebogen. Tot schouderhoogte.' },
+  { n:'Face Pull (kabel)',       sets:3, reps:'15–20', rir:'1–2', ss:true,
+    tip:'SUPERSET met Lateral Raise. Tweede wekelijkse posteriore delt + rotatormanchet. Kabel boven ooghoogte. Touw naar gezicht. Extern roteren.' },
+];
+
+// Lower A — Kracht (met fase-afhankelijke gewichten)
+function getLowerA(phase) {
+  const isRehab = phase === 'rehab';
+  return [
+    { id:'squat',    n: isRehab ? 'Goblet Squat (wk 1) / Barbell Squat (wk 2+)' : 'Barbell Back Squat',
+      sets:4, reps: isRehab ? '8–10 / 6–8' : '6–8', rir:'2', spine:true,
+      tip: isRehab
+        ? 'WEEK 1: Goblet Squat met 8–12 kg — geen spinale belasting. WEEK 2+: Barbell squat op 50% (20 kg). Voeten schouderbreedte. Tot parallel. Eccentrisch 3 tellen.'
+        : 'Voeten schouderbreedte, tenen 15–30° uit. Tot parallel of dieper. Knieën boven tenen. Eccentrisch 3 tellen.' },
+    { id:'bss',      n: isRehab ? 'Bulgarian Split Squat (bodyweight wk 1)' : 'Bulgarian Split Squat',
+      sets:3, reps:'8–10', rir:'2', spine:true,
+      tip: isRehab
+        ? 'WEEK 1: Bodyweight — geen gewichten. Heupmobiliteit en glute-activatie zijn het doel. WEEK 2+: 7,5 kg per dumbbell.'
+        : 'Per dumbbell. Achterste voet op bank. Knie boven enkel onderaan. Glute van voorste been is primair.' },
+    { id:'rdl',      n:'Romanian Deadlift', sets:4, reps:'8–10', rir:'2', spine:true,
+      tip: isRehab
+        ? 'WEEK 1: 40% werkgewicht (24 kg). WEEK 2+: 50% (30 kg). Bar langs benen. Heupen naar achter — niet omlaagbuigen. Stop als hamstrings stretchen.'
+        : 'Bar langs benen. Heupen naar achter — niet omlaagbuigen. Stop als hamstrings stretchen. Rug recht houden.' },
+    { id:'legcurl',  n:'Leg Curl (liggend)', sets:3, reps:'10–12', rir:'2', spine:false,
+      tip:'Heupen op bank drukken. Volledig uitstrekken onderaan. Eccentrisch 2 tellen. Laatste set: rest-pause 15 sec + 3–5 extra reps.' },
+    { id:'calfstand',n:'Calf Raise (staand)', sets:4, reps:'12–15', rir:'1–2', spine:false,
+      tip:'Volledig zakken tot kuit volledig strekt. Bovenin 1 seconde vasthouden. Hoog volume voor kuitgroei.' },
+  ];
+}
+
+// Lower B — Hypertrofie + Power
+const LOWER_B = [
+  { id:'hack',      n:'Box Jump + Hack Squat', sets:'3+4', reps:'5 + 10–12', rir:'— / 1–2', spine:false,
+    tip:'BOX JUMP eerst (3×5) — uitgerust doen na warming-up. Zachte landing, diep door knieën. Dan Hack Squat (4×10–12): voeten laag = meer quads. Rug tegen steun. Eccentrisch 3 tellen.' },
+  { id:'hipthrust', n:'Hip Thrust (barbell)', sets:4, reps:'10–12', rir:'1–2', spine:false,
+    tip:'Schouderbladen op bank. Barbell op heupbotten — altijd pad gebruiken. Billen samentrekken bovenin. Niet met onderrug omhoogkomen. Heupen volledig uitstrekken.' },
+  { id:'legcurl',   n:'Seated Leg Curl', sets:4, reps:'10–12', rir:'2', spine:false,
+    tip:'Zittend = hamstrings in verlengde positie = superieur vs. liggend voor hypertrofie. Volledig uitstrekken onderaan. Eccentrisch 2 tellen.' },
+  { id:'calfseat',  n:'Seated Calf Raise', sets:4, reps:'12–15', rir:'1–2', spine:false,
+    tip:'Knieën gebogen = soleus primair getraind (vs. gastrocnemius bij staand). Volledig zakken voor maximale stretch. Bovenin 1 sec vasthouden.' },
+];
+
+const MCGILL = [
+  { n:'Modified Curl-up', d:'3 × 8–10 reps' },
+  { n:'Bird Dog',         d:'3 × 8/zij — 3 sec hold' },
+  { n:'Side Plank',       d:'3 × 20–30 sec' },
+  { n:'Dead Bug',         d:'3 × 8/zij' },
+];
+const MORNING = [
+  { n:"Cat-cow",            d:"10 herh." },
+  { n:"Child's pose",       d:"60 sec" },
+  { n:"Knie naar borst",    d:"30 sec/zij" },
+  { n:"Dead Bug",           d:"8/zij" },
+  { n:"Glute Bridge",       d:"15 reps" },
+  { n:"Heupflexor stretch", d:"60 sec/zij" },
+];
+
+// ─── STATE ──────────────────────────────
+let curPhase = localStorage.getItem('phase') || 'rehab';
+let curDay   = localStorage.getItem('day')   || 'ma';
+let openCards = {};
+
+// ─── RENDER ─────────────────────────────
+
+function renderWeekInfo() {
+  const wk = getCurrentWeek();
+  const phaseColors = { rehab:'var(--amber)', build:'var(--yellow)', full:'var(--green)', deload:'var(--green)' };
+  const phaseBg = { rehab:'rgba(255,170,0,0.1)', build:'rgba(212,255,0,0.08)', full:'rgba(0,255,136,0.08)', deload:'rgba(0,255,136,0.08)' };
+  const totalWks = WEEKS.length;
+  const prog = Math.round((wk.w / totalWks) * 100);
+  
+  // Find next deload or milestone
+  const nextDeload = WEEKS.find(w => w.w > wk.w && w.phase === 'deload');
+  const nextInfo = nextDeload ? `Volgende deload: ${nextDeload.start}` : 'Laatste blok — goed bezig!';
+
+  document.getElementById('weekInfo').innerHTML = `
+    <div class="wi-left">
+      <div class="wi-week">Week ${wk.w} <span style="font-size:0.8rem;font-weight:400;color:var(--muted)">van ${totalWks}</span></div>
+      <div class="wi-date">${wk.start} – ${wk.end}</div>
+    </div>
+    <div style="flex:1;text-align:center">
+      <span class="wi-phase" style="background:${phaseBg[wk.phase]};color:${phaseColors[wk.phase]}">${wk.lbl} — ${wk.desc}</span>
+    </div>
+    <div class="wi-right">
+      <div class="wi-bar-wrap">
+        <div class="wi-bar"><div class="wi-fill" style="width:${prog}%"></div></div>
+        <span class="wi-pct">${prog}%</span>
+      </div>
+      <div class="wi-next">${nextInfo}</div>
+    </div>`;
+    
+  // Auto-set phase based on current week if not manually overridden
+  const manualPhase = localStorage.getItem('phaseManual');
+  if (!manualPhase) {
+    curPhase = wk.phase === 'deload' ? 'deload' : wk.phase;
+    updatePhaseButtons();
+  }
+}
+
+function updatePhaseButtons() {
+  ['rehab','deload','build','full'].forEach(x => {
+    const btn = document.getElementById('ph-' + x);
+    if (btn) btn.className = 'ph-btn' + (x === curPhase ? ' active-' + x : '');
+  });
+}
+
+function setPhase(p) {
+  curPhase = p;
+  localStorage.setItem('phase', p);
+  localStorage.setItem('phaseManual', '1');
+  updatePhaseButtons();
+  renderContent();
+}
+
+function renderDayTabs() {
+  document.getElementById('dayTabs').innerHTML = DAYS.map(d => {
+    const isRest = d.type === 'rest';
+    return `<button class="dt ${isRest ? 'is-rest' : ''} ${d.key === curDay ? 'active' : ''}"
+      onclick="switchDay('${d.key}')">
+      <span class="dt-short">${d.short}</span>
+      <span class="dt-type">${d.lbl}</span>
+    </button>`;
+  }).join('');
+}
+
+function switchDay(key) {
+  curDay = key;
+  localStorage.setItem('day', key);
+  renderDayTabs();
+  renderContent();
+}
+
+function toggleCard(idx) {
+  openCards[idx] = !openCards[idx];
+  const body = document.getElementById('exd-' + idx);
+  const chev = document.getElementById('chev-' + idx);
+  if (body) body.className = 'ex-detail' + (openCards[idx] ? ' open' : '');
+  if (chev) chev.className = 'chev' + (openCards[idx] ? ' open' : '');
+}
+
+function exCard(ex, idx, weightStr, weightColor) {
+  const ssTag = ex.ss ? `<span class="ss-tag">superset</span>` : '';
+  const spineTag = ex.spine ? `<span class="spine-tag">rug</span>` : '';
+  const wDisplay = weightStr ? `<span class="ex-weight" style="color:var(--${weightColor})">${weightStr}</span>` : '';
+  const numStr = String(idx + 1).padStart(2, '0');
+
+  return `<div class="ex-card ${ex.ss ? 'is-ss' : ''}">
+    <div class="ex-top" onclick="toggleCard(${idx})">
+      <span class="ex-num">${numStr}</span>
+      <span class="ex-name">${ex.n || ex.name}${ssTag}${spineTag}</span>
+      <div class="ex-meta">
+        ${wDisplay}
+        <span class="ex-sets-reps">${ex.sets}×${ex.reps}</span>
+        <span class="ex-rir">RIR ${ex.rir}</span>
+        <span class="chev" id="chev-${idx}">▾</span>
+      </div>
+    </div>
+    <div class="ex-detail" id="exd-${idx}">
+      <div class="ex-tip ${ex.spine ? 'amber' : ''}">
+        <span class="tip-lbl ${ex.spine ? 'amber' : ''}">Techniek</span>
+        ${ex.tip || ex.note || ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderContent() {
+  openCards = {};
+  const day = DAYS.find(d => d.key === curDay);
+  const el = document.getElementById('content');
+  const isRehab = curPhase === 'rehab';
+  let html = '';
+
+  // REST
+  if (day.type === 'rest') {
+    el.innerHTML = `<div class="rest-view">
+      <div class="ri">🌙</div>
+      <h3>${day.name} — Rustdag</h3>
+      <p>Herstel is training. Cortisol daalt, spierweefsel repareert, supercompensatie vindt plaats.<br><br>
+      ${isRehab ? '💡 20–30 min wandelen op 50–60% HRmax versnelt herstel en verlaagt cortisol.' : '💡 7.000+ stappen · slaap 7–9u · eiwit 180g ook op rustdag.'}
+      </p>
+    </div>`;
+    return;
+  }
+
+  // DAY TITLE
+  html += `<div class="day-title">
+    <h2>${day.name}</h2>
+    <p>${day.lbl} · ${day.type.startsWith('upper') ? 'Upper — gewichten in eigen app' : 'Lower — gewichten hieronder'}</p>
+  </div>`;
+
+  // MORNING ROUTINE (rehab only)
+  if (isRehab) {
+    html += `<div class="morning-block">
+      <div class="blk-title green">🌅 Dagelijkse ochtendroutine (5–10 min)</div>
+      ${MORNING.map(m => `<div class="blk-row"><span>${m.n}</span><span>${m.d}</span></div>`).join('')}
+    </div>`;
+  }
+
+  // DELOAD
+  if (curPhase === 'deload') {
+    const isRest = day.type === 'rest';
+    if (isRest) {
+      el.innerHTML = `<div class="rest-view"><div class="ri">🌙</div><h3>${day.name} — Rustdag</h3><p>Deload week — extra rust is het doel. Wandel 20–30 min als je wilt.</p></div>`;
+      return;
+    }
+    const isLower = day.type.startsWith('lower');
+    html += `<div class="deload-banner">
+      <div class="db-icon">😴</div>
+      <div class="db-title">Deload — ${day.name}</div>
+      <div class="db-desc">Zelfde oefeningen, flink minder gewicht en volume.<br>Supercompensatie vindt hier plaats — niet overslaan.</div>
+      <div class="db-rules">
+        <div class="db-rule">Gewicht: 60% van je normale werkgewicht</div>
+        <div class="db-rule">Sets: de helft — compound 2 sets, isolatie 1–2 sets</div>
+        <div class="db-rule">Reps: zelfde range, RIR 4–5 (heel makkelijk aanvoelen)</div>
+        <div class="db-rule">Geen failure, geen rest-pause, geen supersets</div>
+        ${isLower ? '<div class="db-rule">McGill Big 3 wel gewoon doen</div>' : ''}
+      </div>
+    </div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // UPPER DAYS
+  if (day.type.startsWith('upper')) {
+    const exList = day.type === 'upperA' ? UPPER_A : day.type === 'upperB' ? UPPER_B : UPPER_C;
+    exList.forEach((ex, i) => { html += exCard(ex, i, null, null); });
+    html += `<div class="note"><strong>Gewichten:</strong> Bijgehouden in je eigen app. Dubbele progressie: bereik bovengrens reps op alle sets → +2–2,5 kg volgende sessie.</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // LOWER A
+  if (day.type === 'lowerA') {
+    if (isRehab) {
+      html += `<div class="mcgill-block">
+        <div class="blk-title amber">🏥 McGill Big 3 + Dead Bug — VÓÓR de sessie</div>
+        ${MCGILL.map(m => `<div class="blk-row"><span>${m.n}</span><span>${m.d}</span></div>`).join('')}
+      </div>`;
+    }
+    const exList = getLowerA(curPhase);
+    exList.forEach((ex, i) => {
+      const kg = ex.spine ? fmtKg(ex.id, curPhase) : fmtKg(ex.id, 'full');
+      const col = ex.spine ? (curPhase === 'rehab' ? 'amber' : curPhase === 'build' ? 'yellow' : 'green') : 'green';
+      html += exCard(ex, i, kg, col);
+    });
+    if (isRehab) html += `<div class="note amber"><strong>Rehab:</strong> Stop direct bij rugpijn. Voel je meer rug dan doelspier → gewicht omlaag. McGill elke ochtend verplicht.</div>`;
+    else if (curPhase === 'build') html += `<div class="note"><strong>Opbouw:</strong> Dubbele progressie actief. Bovengrens reps bereikt? → +2,5 kg volgende sessie.</div>`;
+    else html += `<div class="note green"><strong>Volledig schema:</strong> Bijna op werkgewicht. Luister goed naar je rug — verhoog alleen als techniek 100% is.</div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  // LOWER B
+  if (day.type === 'lowerB') {
+    LOWER_B.forEach((ex, i) => {
+      const kg = fmtKg(ex.id, 'full');
+      html += exCard(ex, i, kg, 'green');
+    });
+    html += `<div class="note green"><strong>Alle gewichten op 100%</strong> — deze oefeningen belasten de rug minimaal. Focus op glute-activatie bij hip thrust.</div>`;
+    el.innerHTML = html;
+    return;
+  }
+}
+
+// ─── INIT ───────────────────────────────
+renderWeekInfo();
+renderDayTabs();
+updatePhaseButtons();
+// Set today's day automatically
+const todayMap = { 0:'zo', 1:'ma', 2:'di', 3:'wo', 4:'do', 5:'vr', 6:'za' };
+const todayKey = todayMap[new Date().getDay()];
+if (!localStorage.getItem('day')) { curDay = todayKey; }
+renderDayTabs();
+renderContent();
+</script>
+</body>
+</html>
